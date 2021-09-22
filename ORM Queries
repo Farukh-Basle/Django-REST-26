@@ -1,0 +1,404 @@
+
+Django ORM
+====== ====
+The Django web framework includes a default object-relational mapping layer (ORM) that can be used to interact with application data from various relational databases such as SQLite, PostgreSQL and MySQL.
+
+The Django ORM is an implementation of the object-relational mapping (ORM) concept.
+
+aggregation functions
+---------    --------
+Grouping of records in Django ORM can be done using aggregation functions like Max, Min, Avg, Sum.
+
+Django ORM queries help to create, retrieve, update and delete objects. 
+
+But sometimes we need to get aggregated values from the objects. 
+We can get them by example shown below
+
+>>> from django.db.models import Avg, Max, Min, Sum, Count
+>>> User.objects.all().aggregate(Avg('id'))
+
+
+
+To display  SQL  Query  code
+========= ==================
+>>> print(Employee.objects.filter(ename='Srinivas').query)
+
+SELECT `Serialization_App_employee`.`id`, `Serialization_App_employee`.`eno`, `Serialization_App_employee`.`ename`, `Serialization_App_employee`.`address`, `Serialization_App_employee`.`salary` FROM `Serialization_App_employee` WHERE `Serialization_App_employee`.`ename` = Srinivas
+
+
+The create() method
+============ ======
+---->> The create() method allows us to create and commit object to the database in one go, instead of separately calling the save() method. 
+
+For example:
+
+>>> a2 = Author.objects.create(name='jerry', email='jerry@mail.com')
+
+
+
+The bulk_create() method
+=================
+
+---->> The bulk_create() method allows us to create and commit multiple objects in one step. It accepts a list of objects. 
+
+For example:
+>>> Author.objects.bulk_create([
+...  Author(name='spike', email='spike@mail.com'),
+...  Author(name='tyke', email='tyke@mail.com'),
+...  Author(name='droopy', email='droopy@mail.com'),
+... ])
+
+
+The all() method
+========= ======
+---->>> The all() method fetches all the records from the table. For example:
+
+>>> Author.objects.all()
+
+
+
+
+
+
+
+The count() method
+==========
+---->> The count() method returns the total number of records in a database table.
+
+>>> Author.objects.count()   # 5
+
+Filtering records using the filter() method
+=======  ========  ===================
+Most of the time you would only want to work with a subset of data. 
+
+Django provides a filter() method which returns a subset of data. 
+
+It accepts field names as keyword arguments and returns a QuerySet object.
+
+>>> Author.objects.filter(name='tom')
+
+
+
+Django Field Lookups
+=====  ==== =======
+In addition to passing field names as keyword arguments. 
+
+You can also use something called lookups. Managers and QuerySet objects come with a feature called lookups. 
+
+A lookup is composed of a model field followed by two underscores (__) which are then followed by lookup name. Let's take some examples.
+
+examples
+======
+__contains lookup finds all the records where name field contains the word "ke".
+
+The __startswith lookup finds all the records whose name field start with "t". 
+There is also exists a complementary lookup called __endswith.
+
+Both __startswith and __endswith are case-sensitive. Their is case-insensitive equivalents are __istartswith and __iendswith.
+
+
+
+__gt,__lt, __gte, __lte
+=========  =========
+
+__gt lookup finds all the records whose id or primary key (pk) is greater than 3. There also exists a complementary lookup called __lt.
+
+Here __lt lookups find all the records whose primary key is less than 3. 
+
+There are two more similar lookups called __gte and __lte  which finds records which are greater than or equal to and less than or equal to respectively.
+
+
+get()
+====
+Notice the difference between the output of get() and filter() method. For the same parameter they both will give two different results. 
+
+The get() method returns a instance of Author while filter() methods returns a QuerySet object.
+
+
+Ordering Results
+=======  =======
+To order result we use order_by() method, just like filter() it also returns a QuerySet object. It accepts field names that you want to sort by as positional arguments.
+
+>>> Author.objects.order_by("id")
+
+
+sort by multiple fields:
+======= ======== ======
+---->> You can also sort the result by multiple fields like this.
+
+>>> Author.objects.filter(id__gt=3).order_by("name", "-email")
+
+<QuerySet [<Author: droopy : droopy@mail.com>, <Author: spike : spike@mail.com>,
+ <Author: tyke : tyke@mail.com>]>
+
+
+--->> This code will sort the result first by name in ascending and then by email in descending order.
+
+
+
+
+Selecting the fields 
+========= ===========
+>>> Author.objects.filter(name__contains='foo').order_by("name")
+
+It returns data from all the fields (columns).
+
+values_list()
+=============
+What if we want data only from one or two fields ? The objects manager provides a values_list() method specially for this job. 
+
+The values_list() accepts optional one or more field names from which we want the data and returns a QuerySet. 
+
+For example:
+----------
+>>> Author.objects.values_list("id", "name")
+<QuerySet [(1, 'tom'), (2, 'jerry'), (3, 'spike'), (4, 'tyke'), (5, 'droopy')]>
+
+>>> Employee.objects.values_list('id','ename')
+
+<QuerySet [(1, 'Srinivas'), (2, 'Shivam'), (3, 'Shivam 123')]>
+
+>>> Employee.objects.values('id','ename')
+<QuerySet [{'id': 1, 'ename': 'Srinivas'}, {'id': 2, 'ename': 'Shivam'}]>
+
+
+values()
+========
+The objects manager also provides an identical method called values() which works exactly like values_list() but it returns a QuerySet where each element is a dictionary instead of a tuple.
+
+>>> Employee.objects.values()
+<QuerySet [{'id': 1, 'eno': 10, 'ename': 'Srinivas', 'address': 'Hyderabad', 'salary': 10000}, {'id': 2, 'eno': 20, 'ename': 'Shivam', 'address': 'Hyd', 'salary': 20000}]>
+
+Slicing Results 
+======  =======
+>>> # returns the first three objects after sorting the result
+>>> Author.objects.order_by("-id")[:3]
+
+>>> Author.objects.order_by("-id")[-1]
+AssertionError: Negative indexing is not supported.
+
+
+Updating Multiple Objects
+======== ======== =======
+The objects manager provides a method called update() to update one or multiple records in one step. 
+
+Just like filter() method it accepts one or more keyword arguments. 
+
+If the update was successful it returns the number of rows updated.
+
+>>> Author.objects.filter(pk=2).update(email='tom@yahoo.com')     #  1
+
+---->> This code will update the email of author whose pk is equal to 2.
+
+Updating all objects
+======= ===========
+>>> Author.objects.all().update(active=True)  # 5
+
+---->> The above code updates the value of active field to True for all the records in           the Author's table. 
+----->> The code is equivalent to the following:
+>>> Author.objects.update(active=True)
+
+
+
+
+Deleting records
+======= ========
+The delete() method is used to delete one or more objects. For example:
+
+Deleting a single object.
+ ======  ======= =======
+>>> a = Author.objects.get(pk=2)
+>>> a
+<Author: tom : tom@mail.com>
+
+>>> a.delete()
+(1, {'blog.Author': 1})
+
+
+Deleting multiple records.
+=======  ========  =======
+>>> r = Author.objects.all().delete()
+>>> r
+(4, {'blog.Author': 4})
+
+
+
+
+
+
+
+
+
+
+
+ORM  Queries
+==== =======
+---->>  create  bulk records
+
+>>> Employee.objects.bulk_create([Employee(eno=25,ename='Rohit Sharm', address='Bangalore', salary=30000),Employee(eno=55,ename='Srini', address='Chennai', salary=35000)])
+
+[<Employee: Rohit Sharm>, <Employee: Srini>]
+
+--->> Employee.objects.filter(ename__startswith='Shivam')
+
+<QuerySet [<Employee: Shivam>, <Employee: Shivam 123>]>
+
+--->>  Employee.objects.filter(ename__endswith='123')
+
+--->> Employee.objects.filter(id__in=[4,5])
+
+--->> Employee.objects.filter(id__gte=4).count()
+
+
+--->> Employee.objects.filter(salary__in=[10000,60000]).aggregate(total_avg=Avg('salary'))
+
+--->> Employee.objects.all().aggregate(total_avg=Sum('salary')) 
+{'total_avg': 610070}
+
+--->> Employee.objects.aggregate(total_avg=Avg('salary'))
+{'total_avg': 76258.75}
+
+--->> Employee.objects.filter(Q(salary__lt=20000) | Q(address__endswith='Mumbai'))
+
+<QuerySet [<Employee: Srinivas>, <Employee: Shivam 123>, <Employee: Virat 123>, <Employee: Krishna Shivam>, <Employee: Virat Kohli>]>
+
+--->> Employee.objects.filter(Q(salary__lt=20000) & Q(address__endswith='Mumbai'))
+
+<QuerySet [<Employee: Krishna Shivam>]>
+
+
+
+--->> Employee.objects.filter(Q(salary__lt=20000)).order_by('salary')
+
+<QuerySet [<Employee: Krishna Shivam>, <Employee: Virat 123>, <Employee: Srinivas>, <Employee: Shivam 123>]>
+
+---->> Employee.objects.filter(Q(ename__startswith='S')|Q(address__endswith='Pune'))
+
+NOTE--->>  ~Q(....) --->> excluding given condition it returns because of ~ operator.
+
+--->> Employee.objects.all().order_by('salary')
+
+<QuerySet [<Employee: Krishna Shivam>, <Employee: Virat 123>, <Employee: Srinivas>, <Employee: Shivam 123>, <Employee: Shivam>, <Employee: Virat Varam>, <Employee: Virat Kohli>, <Employee: Rohit>]>
+
+
+---->> Employee.objects.filter(Q(salary__range=[9000,40000])).order_by('address')
+
+---->> Employee.objects.filter(salary__range=[9000,40000]).order_by('address')[:2]
+
+<QuerySet [<Employee: Shivam>, <Employee: Srinivas>, <Employee: Shivam 123>]>
+
+
+---->> Employee.objects.values().order_by('salary')
+
+<QuerySet [{'id': 5, 'eno': 40, 'ename': 'Krishna Shivam', 'address': 'New Mumbai', 'salary': 70}, {'id': 4, 'eno': 25, 'ename': 'Virat 123', 'address': 'mumbai', 'salary': 5000}, {'id': 1, 'eno': 10, 'ename': 'Srinivas', 'address': 'Hyderabad', 'salary': 10000}, {'id': 3, 'eno': 30, 'ename': 'Shivam 123', 'address': 'Pune', 'salary': 15000}, {'id': 2, 'eno': 20, 'ename': 'Shivam', 'address': 'Hyd', 'salary': 20000}, {'id': 7, 'eno': 50, 'ename': 'Virat Varam', 'address': 'Old Pune', 'salary': 50000}, {'id': 6, 'eno': 40, 'ename': 'Virat Kohli', 'address': 'Old Mumbai', 'salary': 60000}, {'id': 8, 'eno': 35, 'ename': 'Rohit', 'address': 'Bangalore', 'salary': 450000}]>
+
+
+--->> Employee.objects.values('ename').filter(ename__in=['Shivam','Rohit'])
+<QuerySet [{'ename': 'Shivam'}, {'ename': 'Rohit'}, {'ename': 'Shivam'}]>
+
+
+
+
+
+
+
+===========    ==============     ===============       ============
+
+ORM  Queries   Revision practices
+====  ======
+
+
+
+e = Employee(eno=..,ename=...)
+e.save()
+
+Employee.objects.create(......)
+
+
+Employee.objects.bulk_create(
+     [
+	    Employee(eno=..,ename=...),   
+	    Employee(eno=..,ename=...),   
+	    Employee(eno=..,ename=...),   
+	    Employee(eno=..,ename=...),   
+	 ]
+)
+
+Employee.objects.all()
+
+
+Employee.objects.get(condition)
+
+
+Employee.objects.filter(condition)
+
+Employee.objects.exclude(condition)
+
+Employee.objects.values_list()
+
+[(v1,v2,v3),(),()]
+
+
+Employee.objects.values()
+
+[{k:v,k:v},{..},{....}]
+
+
+
+Employee.objects.all().count()
+
+Employee.objects.all().order_by('salary')  --> Asending
+
+Employee.objects.all().order_by('-salary')  --> Desending
+
+
+
+Aggregation functions
+==========  =========
+from django.db.models  import  Sum,Avg,Max,Min,Count,Q
+
+
+Employee.objects.aggregate(Sum('salary'))
+
+Employee.objects.aggregate(Avg('salary'))
+
+Employee.objects.aggregate(Max('salary'))
+
+Employee.objects.aggregate(Min('salary'))
+
+
+
+Lookups
+======
+Sysntax  ---->>  fieldName__lookupName='looksup_value'
+
+
+
+Employee.objects.filter(first_name__exact='Ravi')
+
+Employee.objects.filter(first_name__contains='Ravi')
+
+Employee.objects.filter(id__exact=2)     1,2,3,4,5,6,7,8,
+
+Employee.objects.filter(id__in=[2,6])
+
+Employee.objects.filter(id__range=[2,6])
+
+Employee.objects.filter(id__gt=3)  --->> 4,5,6.... 
+
+Employee.objects.filter(id__gte=3)  --->> 3,4,5...
+
+Employee.objects.filter(id__lt=3)   ---->> 2,1,..
+
+Employee.objects.filter(id__lte=3) ---->>  3,2,1...
+
+
+
+Employee.objects.filter(location__startswith='Ne')  
+       Mumbai, Navi Mumbai, New Mumbai, nellore  ----->> New Mumbai
+
+Employee.objects.filter(location__istartswith='Ne') 
+       Mumbai, Navi Mumbai, New Mumbai, nellore  ---->> New Mumbai, nellore
+
+Employee.objects.filter(location__endswith='Mumbai') 
+       Mumbai, Navi Mumbai, New Mumbai, nellore  ---->> Mumbai, Navi Mumbai, New Mumbai
